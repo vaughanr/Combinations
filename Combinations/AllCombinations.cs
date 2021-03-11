@@ -12,7 +12,7 @@ namespace Combinations
             public List<int> Data { get; private set; }
             public Combination(IEnumerable<int> nums)
             {
-                Data = nums.OrderBy(n => n).ToList();
+                Data = nums.OrderBy(n=>n).ToList();
             }
 
             public override int GetHashCode()
@@ -34,19 +34,17 @@ namespace Combinations
             }
         }
 
-
-        public List<List<int>> Solve(List<int> nums, int size)
+        public List<List<int>> SolveRecursive(List<int> nums, int size)
         {
             if (size > nums.Count)
             {
                 return new List<List<int>> { nums };
             }
             var all = new List<List<int>>();
-            Inner(nums, size, new HashSet<Combination>(), all);
+            RecursiveInner(nums, size, new HashSet<Combination>(), all);
             return all;
         }
-
-        private void Inner(IEnumerable<int> nums, int size, HashSet<Combination> unique, List<List<int>> allCombinations)
+        private void RecursiveInner(IEnumerable<int> nums, int size, HashSet<Combination> unique, List<List<int>> allCombinations)
         {
             if (nums.Count() == size)
             {
@@ -64,9 +62,89 @@ namespace Combinations
                 {
                     var numsLessI = Enumerable.Concat(nums.Take(i), nums.Skip(i + 1).Take(nums.Count())).ToArray();
 
-                    Inner(numsLessI, size, unique, allCombinations);
+                    RecursiveInner(numsLessI, size, unique, allCombinations);
                 }
             }
+        }
+
+        public List<List<int>> SolveWithGenerator(List<int> nums, int size)
+        {
+            if (size > nums.Count)
+            {
+                return new List<List<int>> { nums };
+            }
+            var all = new List<List<int>>();
+
+            foreach(var indexCombination in GenerateIndexes(nums.Count - 1, size))
+            {
+                all.Add(indexCombination.Select(i => nums[i]).ToList());
+            }
+
+            return all;
+        }
+
+        public IEnumerable<List<int>> GenerateIndexes(int maxNum, int combSize)
+        {
+            var unique = new HashSet<Combination>();
+
+            var indexes = new int[combSize];
+
+            var mainIndex = combSize - 1;
+
+            int incIndex = mainIndex;
+
+            while (indexes.Any(i=>i< maxNum))
+            {
+                if(indexes[incIndex] < maxNum)
+                {
+                    int i = combSize - 1;
+
+                    while (indexes[i] == maxNum && i >= 0)
+                    {
+                        indexes[i] = 0;
+                        incIndex = i;
+                        i--;
+                    }
+
+                    indexes[i]++;
+
+                    if(indexes.Distinct().Count() == combSize)
+                    {
+                        unique.Add(new Combination(indexes));
+                    }
+                }
+                else
+                {
+                    while(indexes[incIndex] >= maxNum && incIndex >=0)
+                    {
+                        incIndex--;
+                    }
+
+                    indexes[incIndex]++;
+
+                    int i = combSize - 1;
+
+                    while (i> incIndex)
+                    {
+                        indexes[i] = 0;
+                        i--;
+                    }
+
+                    if (indexes.Distinct().Count() == combSize)
+                    {
+                        unique.Add(new Combination(indexes));
+                    }
+
+                    incIndex = combSize - 1;
+
+                    if (incIndex < mainIndex)
+                    {
+                        mainIndex = incIndex;
+                    }
+                }
+            }
+
+            return unique.Select(c => c.Data).ToList();
         }
     }
 }

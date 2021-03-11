@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AllCombinations.Benchmarks
 {
@@ -8,22 +9,29 @@ namespace AllCombinations.Benchmarks
     {
         private Combinations.AllCombinations allCombinations = new Combinations.AllCombinations();
 
-        [Params(2, 3)]
+        [Params(2, 4)]
         public int Size { get; set; }
 
         [ParamsSource(nameof(ValuesForNum))]
         public List<int> Num { get; set; }
 
         public List<List<int>> ValuesForNum => new List<List<int>> {
-                                                                        new List<int>{1, 2, 3, 4 },
-                                                                        new List<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
+                                                                        Enumerable.Range(1,4).ToList(),
+                                                                        Enumerable.Range(1,7).ToList(),
+                                                                        Enumerable.Range(1,11).ToList(),
         };
 
 
         [Benchmark]
-        public void Combination()
+        public void Recursive()
         {
-            allCombinations.Solve(Num, Size);
+            allCombinations.SolveRecursive(Num, Size);
+        }
+
+        [Benchmark]
+        public void Generator()
+        {
+            allCombinations.SolveWithGenerator(Num, Size);
         }
     }
 }
